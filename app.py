@@ -7,470 +7,333 @@ import warnings
 warnings.filterwarnings("ignore")
 
 st.set_page_config(
-    page_title="Markets Dashboard",
-    page_icon="📊",
+    page_title="Global Markets | Institutional Dashboard",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
 
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #0d1220 0%, #0a0e1a 100%);
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+[data-testid="stAppViewContainer"] { background: #08080f; min-height: 100vh; }
+[data-testid="stHeader"] { display: none !important; }
+[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stDecoration"] { display: none !important; }
+.block-container { padding: 0 !important; max-width: 100% !important; }
+[data-testid="stVerticalBlock"] { gap: 0 !important; }
+
+.topbar {
+    background: linear-gradient(135deg, #0c0c18 0%, #0a0a14 100%);
+    border-bottom: 1px solid rgba(196,164,100,0.15);
+    padding: 0 40px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
 }
-[data-testid="stHeader"] { background: transparent; }
+.topbar-left { display: flex; align-items: center; gap: 24px; }
+.logo-mark { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: #c4a464; letter-spacing: 0.04em; }
+.logo-sep { width: 1px; height: 28px; background: rgba(196,164,100,0.2); }
+.logo-sub { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(196,164,100,0.5); }
+.topbar-right { display: flex; align-items: center; gap: 20px; }
+.live-indicator { display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: rgba(196,164,100,0.6); letter-spacing: 0.08em; text-transform: uppercase; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.6); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.timestamp { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 0.05em; }
 
-div[data-testid="metric-container"] {
-    background: #131929;
-    border: 1px solid rgba(148,163,184,0.1);
-    border-radius: 10px;
-    padding: 14px;
-}
-[data-testid="stMetricLabel"] { color: #94a3b8 !important; font-size: 11px !important; }
-[data-testid="stMetricValue"] { color: #f1f5f9 !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 18px !important; }
-[data-testid="stMetricDelta"] { font-family: 'IBM Plex Mono', monospace !important; font-size: 12px !important; }
+.tape { background: #060610; border-bottom: 1px solid rgba(196,164,100,0.08); height: 36px; overflow: hidden; display: flex; align-items: center; }
+.tape-inner { display: flex; animation: tape-scroll 80s linear infinite; white-space: nowrap; }
+.tape:hover .tape-inner { animation-play-state: paused; }
+@keyframes tape-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.tape-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 24px; border-right: 1px solid rgba(255,255,255,0.04); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.tape-name { color: rgba(255,255,255,0.35); letter-spacing: 0.06em; }
+.tape-price { color: rgba(255,255,255,0.75); font-weight: 500; }
+.tape-pos { color: #10b981; }
+.tape-neg { color: #f43f5e; }
 
-.stTabs [data-baseweb="tab-list"] { gap: 4px; background: #131929; border-radius: 8px; padding: 4px; }
-.stTabs [data-baseweb="tab"] { border-radius: 6px; color: #94a3b8; font-size: 12px; font-weight: 500; padding: 6px 14px; }
-.stTabs [aria-selected="true"] { background: rgba(59,130,246,0.15) !important; color: #3b82f6 !important; }
+.main-wrap { padding: 28px 40px 48px; background: #08080f; }
 
-h1, h2, h3 { color: #f1f5f9 !important; }
-p, label { color: #94a3b8 !important; }
+.sec-head { display: flex; align-items: center; gap: 16px; margin: 32px 0 16px; }
+.sec-head-line { flex:1; height:1px; background: linear-gradient(90deg, rgba(196,164,100,0.15), transparent); }
+.sec-head-text { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(196,164,100,0.45); white-space: nowrap; }
+.sec-flag { font-size: 13px; }
 
-.section-title {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #475569;
-    border-bottom: 1px solid rgba(148,163,184,0.08);
-    padding-bottom: 8px;
-    margin: 20px 0 12px 0;
-    direction: rtl;
-    text-align: right;
-}
+.idx-card { background: #0c0c1a; padding: 18px 20px 14px; transition: background 0.2s; position: relative; overflow: hidden; border: 1px solid rgba(196,164,100,0.06); border-radius: 2px; margin-bottom: 1px; }
+.idx-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg, transparent, rgba(196,164,100,0.12), transparent); }
+.idx-card:hover { background: #10102a; }
+.idx-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.idx-name { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.04em; }
+.idx-region { font-family: 'Inter', sans-serif; font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+.idx-flag { font-size: 14px; opacity: 0.8; }
+.idx-price { font-family: 'IBM Plex Mono', monospace; font-size: 21px; font-weight: 400; color: rgba(255,255,255,0.9); letter-spacing: -0.01em; margin-bottom: 10px; direction: ltr; text-align: right; }
+.idx-pills { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.pill { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 400; padding: 3px 8px; border-radius: 1px; letter-spacing: 0.03em; direction: ltr; }
+.pill-label { font-size: 8px; font-family: 'Inter', sans-serif; letter-spacing: 0.08em; opacity: 0.6; margin-left: 3px; text-transform: uppercase; }
+.p-pos { color: #10b981; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.15); }
+.p-neg { color: #f43f5e; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.15); }
+.p-neu { color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
 
-.badge-row {
-    display: flex;
-    gap: 5px;
-    margin-top: -6px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-.badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-family: monospace;
-}
-.pos { color: #10b981; background: rgba(16,185,129,0.12); }
-.neg { color: #ef4444; background: rgba(239,68,68,0.12); }
-.neu { color: #94a3b8; background: rgba(148,163,184,0.08); }
+.ret-table-wrap { border: 1px solid rgba(196,164,100,0.08); border-radius: 2px; overflow: hidden; background: #0c0c1a; }
+.ret-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.ret-table thead th { background: #080812; padding: 10px 14px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(196,164,100,0.4); border-bottom: 1px solid rgba(196,164,100,0.08); }
+.ret-table thead th:first-child { text-align: right; padding-right: 20px; }
+.ret-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+.ret-table tbody tr:hover { background: rgba(196,164,100,0.03); }
+.ret-table tbody tr:last-child { border-bottom: none; }
+.ret-table td { padding: 10px 14px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.5); direction: ltr; }
+.ret-table td:first-child { text-align: right; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.65); padding-right: 20px; direction: rtl; }
+.rc-pos { color: #10b981; }
+.rc-neg { color: #f43f5e; }
+.rc-neu { color: rgba(255,255,255,0.2); }
 
-.ret-pos { color: #10b981; font-weight: 600; }
-.ret-neg { color: #ef4444; font-weight: 600; }
-.ret-neu { color: #475569; }
+.chart-box { background: #0c0c1a; border: 1px solid rgba(196,164,100,0.08); border-radius: 2px; padding: 20px; position: relative; }
+.chart-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg, rgba(196,164,100,0.2), transparent); }
 
-.disclaimer {
-    font-size: 10px;
-    color: #334155;
-    border-top: 1px solid rgba(148,163,184,0.06);
-    padding-top: 12px;
-    margin-top: 24px;
-    text-align: right;
-    direction: rtl;
-}
+.stTabs [data-baseweb="tab-list"] { background: transparent !important; border-bottom: 1px solid rgba(196,164,100,0.1) !important; gap: 0 !important; padding: 0 !important; }
+.stTabs [data-baseweb="tab"] { font-family: 'Inter', sans-serif !important; font-size: 10px !important; font-weight: 600 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: rgba(255,255,255,0.2) !important; padding: 12px 20px !important; border-bottom: 2px solid transparent !important; background: transparent !important; border-radius: 0 !important; }
+.stTabs [aria-selected="true"] { color: rgba(196,164,100,0.8) !important; border-bottom: 2px solid rgba(196,164,100,0.5) !important; background: transparent !important; }
+
+label[data-testid="stWidgetLabel"] p { color: rgba(196,164,100,0.4) !important; font-size: 9px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; font-family: 'Inter', sans-serif !important; }
+
+[data-testid="stButton"] button { background: rgba(196,164,100,0.08) !important; border: 1px solid rgba(196,164,100,0.2) !important; color: rgba(196,164,100,0.7) !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 10px !important; letter-spacing: 0.08em !important; border-radius: 1px !important; }
+
+.disc { font-family: 'Inter', sans-serif; font-size: 9px; color: rgba(255,255,255,0.12); letter-spacing: 0.05em; line-height: 1.8; border-top: 1px solid rgba(196,164,100,0.06); padding-top: 20px; margin-top: 32px; text-align: right; direction: rtl; }
 </style>
 """, unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════
-# INDICES
-# ══════════════════════════════════════════════
 INDICES = {
-    "🇮🇱 ישראל": [
-        {"ticker": "TA35.TA",   "name": "תל אביב 35",     "region": "בורסה תל אביב"},
-        {"ticker": "TA125.TA",  "name": "תל אביב 125",    "region": "בורסה תל אביב"},
-        {"ticker": "TANEGS.TA", "name": "תל אביב נדל\"ן",  "region": "בורסה תל אביב"},
-    ],
-    "🇺🇸 ארה\"ב": [
-        {"ticker": "^GSPC", "name": "S&P 500",       "region": "ניו יורק"},
-        {"ticker": "^DJI",  "name": "דאו ג'ונס 30",  "region": "ניו יורק"},
-        {"ticker": "^NDX",  "name": "נאסד\"ק 100",    "region": "ניו יורק"},
-        {"ticker": "^VIX",  "name": "VIX",            "region": "תנודתיות"},
-        {"ticker": "TLT",   "name": "אג\"ח US 20Y",   "region": "אג\"ח"},
-    ],
-    "🇪🇺 אירופה": [
-        {"ticker": "^GDAXI",    "name": "דאקס",         "region": "פרנקפורט"},
-        {"ticker": "^FTSE",     "name": "פוטסי 100",    "region": "לונדון"},
-        {"ticker": "^STOXX50E", "name": "יורוסטוקס 50", "region": "אירופה"},
-    ],
-    "🌏 אסיה/פסיפיק": [
-        {"ticker": "^HSI",  "name": "האנג סאנג", "region": "הונג קונג"},
-        {"ticker": "^AXJO", "name": "ASX 200",    "region": "אוסטרליה"},
-        {"ticker": "^N225", "name": "ניקיי 225",  "region": "טוקיו"},
-        {"ticker": "^NSEI", "name": "ניפטי 50",   "region": "מומביי"},
-    ],
-    "📊 אג\"ח וסחורות": [
-        {"ticker": "^TNX",     "name": "תשואת US 10Y", "region": "אג\"ח"},
-        {"ticker": "^TYX",     "name": "תשואת US 30Y", "region": "אג\"ח"},
-        {"ticker": "GC=F",     "name": "זהב",          "region": "סחורות"},
-        {"ticker": "CL=F",     "name": "נפט WTI",      "region": "סחורות"},
-        {"ticker": "EURUSD=X", "name": "EUR/USD",       "region": "מט\"ח"},
-    ],
+    "israel": {"label":"ישראל","flag":"🇮🇱","items":[
+        {"ticker":"TA35.TA","name":"ת\"א 35","region":"Tel Aviv"},
+        {"ticker":"TA125.TA","name":"ת\"א 125","region":"Tel Aviv"},
+        {"ticker":"TANEGS.TA","name":"ת\"א נדל\"ן","region":"Tel Aviv"},
+    ]},
+    "usa": {"label":"ארצות הברית","flag":"🇺🇸","items":[
+        {"ticker":"^GSPC","name":"S&P 500","region":"New York"},
+        {"ticker":"^DJI","name":"Dow Jones","region":"New York"},
+        {"ticker":"^NDX","name":"Nasdaq 100","region":"New York"},
+        {"ticker":"^VIX","name":"VIX","region":"Volatility"},
+        {"ticker":"TLT","name":"UST 20Y ETF","region":"Fixed Income"},
+    ]},
+    "europe": {"label":"אירופה","flag":"🇪🇺","items":[
+        {"ticker":"^GDAXI","name":"DAX","region":"Frankfurt"},
+        {"ticker":"^FTSE","name":"FTSE 100","region":"London"},
+        {"ticker":"^STOXX50E","name":"Euro Stoxx 50","region":"Europe"},
+    ]},
+    "asia": {"label":"אסיה / פסיפיק","flag":"🌏","items":[
+        {"ticker":"^HSI","name":"Hang Seng","region":"Hong Kong"},
+        {"ticker":"^AXJO","name":"ASX 200","region":"Sydney"},
+        {"ticker":"^N225","name":"Nikkei 225","region":"Tokyo"},
+        {"ticker":"^NSEI","name":"Nifty 50","region":"Mumbai"},
+    ]},
+    "fi": {"label":"אג\"ח, סחורות ומט\"ח","flag":"📊","items":[
+        {"ticker":"^TNX","name":"UST 10Y Yield","region":"Fixed Income"},
+        {"ticker":"^TYX","name":"UST 30Y Yield","region":"Fixed Income"},
+        {"ticker":"GC=F","name":"Gold","region":"Commodities"},
+        {"ticker":"CL=F","name":"Crude Oil WTI","region":"Commodities"},
+        {"ticker":"EURUSD=X","name":"EUR / USD","region":"FX"},
+    ]},
 }
 
-ALL_TICKERS = [(info["ticker"], info["name"], section)
-               for section, items in INDICES.items()
-               for info in items]
+ALL = [(i["ticker"],i["name"],sec) for sec,sd in INDICES.items() for i in sd["items"]]
 
-# ══════════════════════════════════════════════
-# DATA FETCHING
-# ══════════════════════════════════════════════
 @st.cache_data(ttl=900)
 def get_quote(ticker):
     try:
-        t = yf.Ticker(ticker)
-        hist = t.history(period="5d", auto_adjust=True)
-        if len(hist) < 2:
-            hist = t.history(period="1mo", auto_adjust=True)
-        if len(hist) < 2:
-            return None
-        price = float(hist["Close"].iloc[-1])
-        prev  = float(hist["Close"].iloc[-2])
-        return {
-            "price":   price,
-            "prev":    prev,
-            "day_chg": (price - prev) / prev * 100 if prev else None,
-        }
-    except Exception:
-        return None
+        h = yf.Ticker(ticker).history(period="5d",auto_adjust=True)
+        if len(h)<2: h = yf.Ticker(ticker).history(period="1mo",auto_adjust=True)
+        if len(h)<2: return None
+        p,q = float(h["Close"].iloc[-1]),float(h["Close"].iloc[-2])
+        return {"price":p,"prev":q,"chg":(p-q)/q*100 if q else None}
+    except: return None
 
 @st.cache_data(ttl=900)
-def get_history(ticker, period="1y"):
+def get_hist(ticker,period="1y"):
     try:
-        t = yf.Ticker(ticker)
-        hist = t.history(period=period, auto_adjust=True)
-        return hist["Close"].dropna()
-    except Exception:
-        return pd.Series(dtype=float)
+        h = yf.Ticker(ticker).history(period=period,auto_adjust=True)
+        return h["Close"].dropna()
+    except: return pd.Series(dtype=float)
 
 @st.cache_data(ttl=900)
-def get_annual_returns(ticker):
-    """Calculate annual returns using daily history resampled to yearly."""
+def get_annual(ticker):
     try:
-        t = yf.Ticker(ticker)
-        # Pull max history available
-        hist = t.history(period="max", auto_adjust=True)["Close"].dropna()
-        if hist.empty:
-            return {}
-        hist.index = hist.index.tz_localize(None) if hist.index.tz else hist.index
-        hist.index = pd.to_datetime(hist.index)
+        h = yf.Ticker(ticker).history(period="max",auto_adjust=True)["Close"].dropna()
+        if h.empty: return {}
+        h.index = pd.to_datetime(h.index.tz_localize(None) if h.index.tz else h.index)
+        now,ret = datetime.now(),{}
+        for y in [2020,2021,2022,2023,2024]:
+            yr=h[h.index.year==y]; pr=h[h.index.year==y-1]
+            if len(yr)>0 and len(pr)>0 and pr.iloc[-1]>0:
+                ret[str(y)]=(yr.iloc[-1]-pr.iloc[-1])/pr.iloc[-1]*100
+        cy=h[h.index.year==now.year]; py=h[h.index.year==now.year-1]
+        if len(cy)>0 and len(py)>0 and py.iloc[-1]>0:
+            ret["YTD"]=(cy.iloc[-1]-py.iloc[-1])/py.iloc[-1]*100
+        cm=h[(h.index.year==now.year)&(h.index.month==now.month)]
+        pm=h[(h.index.year==now.year)&(h.index.month==now.month-1)] if now.month>1 else h[h.index.year==now.year-1]
+        if len(cm)>0 and len(pm)>0 and pm.iloc[-1]>0:
+            ret["MTD"]=(cm.iloc[-1]-pm.iloc[-1])/pm.iloc[-1]*100
+        if len(h)>=2: ret["1D"]=(h.iloc[-1]-h.iloc[-2])/h.iloc[-2]*100
+        return ret
+    except: return {}
 
-        returns = {}
-        now = datetime.now()
+def fp(v):
+    if v is None or (isinstance(v,float) and pd.isna(v)): return "—"
+    return ("+{:.2f}%" if v>=0 else "{:.2f}%").format(v)
 
-        # Annual returns 2019-2024 (need year-end prices)
-        for year in [2020, 2021, 2022, 2023, 2024]:
-            # Get last trading day of year and year before
-            yr   = hist[hist.index.year == year]
-            prev = hist[hist.index.year == year - 1]
-            if len(yr) > 0 and len(prev) > 0:
-                end_price   = yr.iloc[-1]
-                start_price = prev.iloc[-1]
-                if start_price > 0:
-                    returns[str(year)] = (end_price - start_price) / start_price * 100
-
-        # YTD: from last day of previous year to today
-        cur_yr  = hist[hist.index.year == now.year]
-        prev_yr = hist[hist.index.year == now.year - 1]
-        if len(cur_yr) > 0 and len(prev_yr) > 0 and prev_yr.iloc[-1] > 0:
-            returns["YTD"] = (cur_yr.iloc[-1] - prev_yr.iloc[-1]) / prev_yr.iloc[-1] * 100
-
-        # MTD: from last day of previous month to today
-        cur_mo  = hist[(hist.index.year == now.year) & (hist.index.month == now.month)]
-        prev_mo_end = hist[(hist.index.year == now.year) & (hist.index.month == now.month - 1)] if now.month > 1 else hist[hist.index.year == now.year - 1]
-        if len(cur_mo) > 0 and len(prev_mo_end) > 0 and prev_mo_end.iloc[-1] > 0:
-            returns["MTD"] = (cur_mo.iloc[-1] - prev_mo_end.iloc[-1]) / prev_mo_end.iloc[-1] * 100
-
-        # Daily (already in quotes, but add here too)
-        if len(hist) >= 2:
-            returns["יומי"] = (hist.iloc[-1] - hist.iloc[-2]) / hist.iloc[-2] * 100
-
-        return returns
-    except Exception as e:
-        return {}
-
-# ══════════════════════════════════════════════
-# HELPERS
-# ══════════════════════════════════════════════
-def fmt_pct(v):
-    if v is None or (isinstance(v, float) and pd.isna(v)):
-        return "—"
-    return f"+{v:.2f}%" if v >= 0 else f"{v:.2f}%"
-
-def fmt_price(v):
+def fpr(v):
     if v is None: return "—"
-    if v > 1000:  return f"{v:,.1f}"
-    if v > 10:    return f"{v:,.2f}"
+    if v>10000: return f"{v:,.0f}"
+    if v>1000: return f"{v:,.1f}"
+    if v>10: return f"{v:,.2f}"
     return f"{v:.4f}"
 
-def badge_cls(v):
-    if v is None or (isinstance(v, float) and pd.isna(v)): return "neu"
-    return "pos" if v >= 0 else "neg"
+def pc(v):
+    if v is None or (isinstance(v,float) and pd.isna(v)): return "p-neu"
+    return "p-pos" if v>=0 else "p-neg"
 
-def color_val(v):
-    if v is None or (isinstance(v, float) and pd.isna(v)): return "ret-neu"
-    return "ret-pos" if v >= 0 else "ret-neg"
+def rc(v):
+    if v is None or (isinstance(v,float) and pd.isna(v)): return "rc-neu"
+    return "rc-pos" if v>=0 else "rc-neg"
 
-COLORS = ["#3b82f6","#10b981","#f59e0b","#8b5cf6","#06b6d4","#ef4444","#84cc16","#f97316","#ec4899","#14b8a6"]
-
-PLOTLY_BASE = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="#94a3b8", family="Inter, sans-serif", size=11),
-    margin=dict(l=10, r=10, t=40, b=10),
-    xaxis=dict(gridcolor="rgba(148,163,184,0.06)", showline=False, tickfont=dict(size=10, color="#475569")),
-    yaxis=dict(gridcolor="rgba(148,163,184,0.06)", showline=False, tickfont=dict(size=10, color="#475569")),
+COLORS=["#c4a464","#3b82f6","#10b981","#8b5cf6","#06b6d4","#f59e0b","#f43f5e","#84cc16","#ec4899","#14b8a6"]
+CHART=dict(
+    paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="rgba(255,255,255,0.25)",family="IBM Plex Mono, monospace",size=10),
+    margin=dict(l=8,r=8,t=40,b=8),
+    xaxis=dict(gridcolor="rgba(255,255,255,0.03)",showline=False,tickfont=dict(size=9,color="rgba(255,255,255,0.2)")),
+    yaxis=dict(gridcolor="rgba(255,255,255,0.03)",showline=False,tickfont=dict(size=9,color="rgba(255,255,255,0.2)")),
     hovermode="x unified",
-    legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="#94a3b8", size=11)),
+    hoverlabel=dict(bgcolor="#0c0c1a",bordercolor="rgba(196,164,100,0.3)",font=dict(color="rgba(255,255,255,0.8)",size=11,family="IBM Plex Mono")),
+    legend=dict(bgcolor="rgba(0,0,0,0)",font=dict(color="rgba(255,255,255,0.4)",size=10)),
 )
 
-# ══════════════════════════════════════════════
-# HEADER
-# ══════════════════════════════════════════════
-c1, c2, c3 = st.columns([4, 3, 1])
-with c1:
-    st.markdown("## 📊 Markets Terminal")
-    st.caption("דשבורד מדדים גלובלי — נתונים בעיכוב עד 15 דקות | מקור: Yahoo Finance")
-with c2:
-    st.markdown(f"<br><span style='color:#475569;font-size:11px;font-family:monospace'>⏱ עדכון אחרון: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</span>", unsafe_allow_html=True)
-with c3:
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 רענן"):
+now = datetime.now()
+st.markdown(f"""
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">◈ MARKETS</div>
+    <div class="logo-sep"></div>
+    <div class="logo-sub">Global Indices Terminal</div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-indicator"><div class="live-dot"></div> Live · 15min delay</div>
+    <div class="timestamp">{now.strftime("%d %b %Y  %H:%M:%S")}</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+with st.spinner(""):
+    quotes = {t: get_quote(t) for t,_,_ in ALL}
+    annual = {t: get_annual(t) for t,_,_ in ALL}
+
+tape_items=""
+for ticker,name,_ in ALL:
+    q=quotes.get(ticker) or {}
+    ar=annual.get(ticker) or {}
+    chg=ar.get("1D") or q.get("chg")
+    cls="tape-pos" if (chg or 0)>=0 else "tape-neg"
+    tape_items+=f'<div class="tape-item"><span class="tape-name">{name}</span><span class="tape-price">{fpr(q.get("price"))}</span><span class="{cls}">{fp(chg)}</span></div>'
+
+st.markdown(f'<div class="tape"><div class="tape-inner">{tape_items}{tape_items}</div></div>', unsafe_allow_html=True)
+st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+col_tabs,col_btn=st.columns([8,1])
+with col_btn:
+    if st.button("⟳ Refresh"):
         st.cache_data.clear()
         st.rerun()
 
-st.markdown("---")
+tab1,tab2,tab3,tab4=st.tabs(["MARKETS","ANNUAL RETURNS","CHART","COMPARISON"])
 
-# ══════════════════════════════════════════════
-# LOAD DATA
-# ══════════════════════════════════════════════
-with st.spinner("טוען נתונים מ-Yahoo Finance..."):
-    quotes = {}
-    annual = {}
-    for ticker, name, _ in ALL_TICKERS:
-        quotes[ticker] = get_quote(ticker)
-        annual[ticker] = get_annual_returns(ticker)
-
-# ══════════════════════════════════════════════
-# TABS
-# ══════════════════════════════════════════════
-tab1, tab2, tab3, tab4 = st.tabs(["📈 מדדים חיים", "📅 תשואות שנתיות", "📊 גרפים", "🔀 השוואה"])
-
-# ──────────────────────────────────────────────
-# TAB 1 — LIVE
-# ──────────────────────────────────────────────
 with tab1:
-    for section, items in INDICES.items():
-        st.markdown(f"<div class='section-title'>{section}</div>", unsafe_allow_html=True)
-        cols = st.columns(len(items))
-        for col, info in zip(cols, items):
-            ticker  = info["ticker"]
-            q  = quotes.get(ticker) or {}
-            ar = annual.get(ticker) or {}
-            price   = q.get("price")
-            day_chg = ar.get("יומי") or q.get("day_chg")
-            ytd     = ar.get("YTD")
-            mtd     = ar.get("MTD")
+    for sec_key,sec_data in INDICES.items():
+        items=sec_data["items"]; flag=sec_data["flag"]; label=sec_data["label"]
+        st.markdown(f'<div class="sec-head"><span class="sec-flag">{flag}</span><span class="sec-head-text">{label}</span><div class="sec-head-line"></div></div>', unsafe_allow_html=True)
+        cols=st.columns(len(items))
+        for col,info in zip(cols,items):
+            ticker=info["ticker"]
+            q=quotes.get(ticker) or {}
+            ar=annual.get(ticker) or {}
+            price=q.get("price")
+            chg1d=ar.get("1D") or q.get("chg")
+            ytd=ar.get("YTD"); mtd=ar.get("MTD")
             with col:
-                st.metric(
-                    label=f"{info['name']}",
-                    value=fmt_price(price),
-                    delta=fmt_pct(day_chg) if day_chg is not None else None
-                )
                 st.markdown(f"""
-                <div class='badge-row'>
-                  <span class='badge neu'>יומי</span>
-                  <span class='badge {badge_cls(day_chg)}'>{fmt_pct(day_chg)}</span>
-                  <span class='badge neu'>MTD</span>
-                  <span class='badge {badge_cls(mtd)}'>{fmt_pct(mtd)}</span>
-                  <span class='badge neu'>YTD</span>
-                  <span class='badge {badge_cls(ytd)}'>{fmt_pct(ytd)}</span>
+                <div class="idx-card">
+                  <div class="idx-card-top">
+                    <div><div class="idx-name">{info['name']}</div><div class="idx-region">{info['region']}</div></div>
+                    <div class="idx-flag">{flag}</div>
+                  </div>
+                  <div class="idx-price">{fpr(price)}</div>
+                  <div class="idx-pills">
+                    <div class="pill {pc(chg1d)}"><span class="pill-label">1D</span>{fp(chg1d)}</div>
+                    <div class="pill {pc(mtd)}"><span class="pill-label">MTD</span>{fp(mtd)}</div>
+                    <div class="pill {pc(ytd)}"><span class="pill-label">YTD</span>{fp(ytd)}</div>
+                  </div>
                 </div>""", unsafe_allow_html=True)
 
-# ──────────────────────────────────────────────
-# TAB 2 — ANNUAL RETURNS TABLE
-# ──────────────────────────────────────────────
 with tab2:
-    st.markdown("### תשואות שנתיות 2020–YTD")
-    YEARS = ["2020", "2021", "2022", "2023", "2024", "YTD", "MTD", "יומי"]
-    rows = []
-    for ticker, name, section in ALL_TICKERS:
-        ar = annual.get(ticker) or {}
-        row = {"מדד": name, "קטגוריה": section.split(" ", 1)[-1]}
-        for y in YEARS:
-            v = ar.get(y)
-            row[y] = round(v, 2) if v is not None else None
-        rows.append(row)
+    COLS=["2020","2021","2022","2023","2024","YTD","MTD","1D"]
+    rows_html=""
+    for ticker,name,_ in ALL:
+        ar=annual.get(ticker) or {}
+        cells=f"<td>{name}</td>"
+        for c in COLS:
+            v=ar.get(c); cls=rc(v); txt=fp(v)
+            cells+=f'<td><span class="{cls}">{txt}</span></td>'
+        rows_html+=f"<tr>{cells}</tr>"
+    head_html="<th>INDEX</th>"+"".join(f"<th>{c}</th>" for c in COLS)
+    st.markdown(f'<div class="ret-table-wrap"><table class="ret-table"><thead><tr>{head_html}</tr></thead><tbody>{rows_html}</tbody></table></div>', unsafe_allow_html=True)
 
-    df = pd.DataFrame(rows)
-
-    def style_pct(val):
-        if val is None or (isinstance(val, float) and pd.isna(val)):
-            return "color: #334155"
-        return "color: #10b981; font-weight:600" if val >= 0 else "color: #ef4444; font-weight:600"
-
-    styled = (
-        df.style
-        .applymap(style_pct, subset=YEARS)
-        .format({y: (lambda v: fmt_pct(v) if v is not None and not (isinstance(v, float) and pd.isna(v)) else "—") for y in YEARS})
-        .set_properties(**{"text-align": "center", "font-family": "IBM Plex Mono, monospace", "font-size": "12px"})
-        .set_properties(subset=["מדד", "קטגוריה"], **{"text-align": "right", "font-family": "Inter, sans-serif"})
-        .set_table_styles([
-            {"selector": "thead th", "props": [("background", "#0d1220"), ("color", "#475569"), ("font-size", "10px"), ("text-align", "center")]},
-            {"selector": "tbody tr:hover", "props": [("background", "#1a2235")]},
-            {"selector": "tbody td", "props": [("border-color", "rgba(148,163,184,0.06)")]},
-        ])
-    )
-    st.dataframe(styled, use_container_width=True, height=620)
-
-# ──────────────────────────────────────────────
-# TAB 3 — CHARTS
-# ──────────────────────────────────────────────
 with tab3:
-    ticker_opts = {f"{name}  ({ticker})": ticker for ticker, name, _ in ALL_TICKERS}
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        sel_label = st.selectbox("בחר מדד לתצוגה", list(ticker_opts.keys()))
+    ticker_map={f"{name}  [{ticker}]":ticker for ticker,name,_ in ALL}
+    name_map={ticker:name for ticker,name,_ in ALL}
+    c1,c2=st.columns([3,1])
+    with c1: sel_lbl=st.selectbox("INDEX",list(ticker_map.keys()),label_visibility="visible")
     with c2:
-        period_opts = {"חודש אחד": "1mo", "3 חודשים": "3mo", "6 חודשים": "6mo", "שנה": "1y", "3 שנים": "3y", "5 שנים": "5y"}
-        sel_period_label = st.selectbox("תקופה", list(period_opts.keys()), index=3)
-
-    sel_ticker = ticker_opts[sel_label]
-    sel_period = period_opts[sel_period_label]
-    hist = get_history(sel_ticker, sel_period)
-
+        pmap={"1M":"1mo","3M":"3mo","6M":"6mo","1Y":"1y","3Y":"3y","5Y":"5y"}
+        sel_per=pmap[st.selectbox("PERIOD",list(pmap.keys()),index=3,label_visibility="visible")]
+    sel_t=ticker_map[sel_lbl]; hist=get_hist(sel_t,sel_per)
+    st.markdown('<div class="chart-box">', unsafe_allow_html=True)
     if not hist.empty:
-        first = hist.iloc[0]
-        norm  = (hist - first) / first * 100
-        is_pos = norm.iloc[-1] >= 0
-        line_color = "#10b981" if is_pos else "#ef4444"
-        fill_color = "rgba(16,185,129,0.07)" if is_pos else "rgba(239,68,68,0.07)"
+        first=hist.iloc[0]; norm=(hist-first)/first*100
+        is_pos=norm.iloc[-1]>=0
+        lc="#10b981" if is_pos else "#f43f5e"
+        fc="rgba(16,185,129,0.05)" if is_pos else "rgba(244,63,94,0.05)"
+        fig=go.Figure()
+        fig.add_trace(go.Scatter(x=hist.index,y=norm,mode="lines",name=name_map[sel_t],line=dict(color=lc,width=1.5),fill="tozeroy",fillcolor=fc,hovertemplate="%{x|%d %b %Y}  <b>%{y:+.2f}%</b><extra></extra>"))
+        fig.update_layout(**CHART,yaxis=dict(**CHART["yaxis"],tickformat="+.1f",ticksuffix="%"),height=340,showlegend=False,title=dict(text=f"{name_map[sel_t]}  ·  Performance ({sel_per})",font=dict(color="rgba(196,164,100,0.5)",size=11,family="Inter"),x=0,xanchor="left"))
+        st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
+        ar=annual.get(sel_t) or {}; yrs=["2020","2021","2022","2023","2024","YTD","MTD"]
+        vals=[ar.get(y) for y in yrs]
+        bar_c=["rgba(16,185,129,0.7)" if (v or 0)>=0 else "rgba(244,63,94,0.7)" for v in vals]
+        fig2=go.Figure()
+        fig2.add_trace(go.Bar(x=yrs,y=vals,marker_color=bar_c,marker_line_width=0,text=[fp(v) for v in vals],textposition="outside",textfont=dict(size=9,color="rgba(255,255,255,0.35)"),hovertemplate="%{x}: <b>%{y:+.2f}%</b><extra></extra>"))
+        fig2.update_layout(**CHART,yaxis=dict(**CHART["yaxis"],tickformat="+.1f",ticksuffix="%"),height=260,bargap=0.4,showlegend=False,title=dict(text="Annual Returns",font=dict(color="rgba(196,164,100,0.5)",size=11,family="Inter"),x=0,xanchor="left"))
+        st.plotly_chart(fig2,use_container_width=True,config={"displayModeBar":False})
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=hist.index, y=norm,
-            mode="lines", name=sel_label,
-            line=dict(color=line_color, width=2),
-            fill="tozeroy", fillcolor=fill_color,
-            hovertemplate="%{x|%d/%m/%Y}  %{y:+.2f}%<extra></extra>"
-        ))
-        fig.update_layout(
-            **PLOTLY_BASE,
-            title=dict(text=f"ביצועים — {sel_label}", font=dict(color="#f1f5f9", size=13)),
-            yaxis=dict(**PLOTLY_BASE["yaxis"], tickformat="+.1f", ticksuffix="%"),
-            height=360
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Annual bar chart
-        ar = annual.get(sel_ticker) or {}
-        yr_labels = ["2020","2021","2022","2023","2024","YTD","MTD"]
-        yr_vals   = [ar.get(y) for y in yr_labels]
-        bar_colors = ["#10b981" if (v or 0) >= 0 else "#ef4444" for v in yr_vals]
-
-        fig2 = go.Figure()
-        fig2.add_trace(go.Bar(
-            x=yr_labels, y=yr_vals,
-            marker_color=bar_colors, marker_line_width=0,
-            text=[fmt_pct(v) for v in yr_vals],
-            textposition="outside",
-            textfont=dict(size=10, color="#94a3b8"),
-            hovertemplate="%{x}: %{y:+.2f}%<extra></extra>"
-        ))
-        fig2.update_layout(
-            **PLOTLY_BASE,
-            title=dict(text="תשואות שנתיות", font=dict(color="#f1f5f9", size=13)),
-            yaxis=dict(**PLOTLY_BASE["yaxis"], tickformat="+.1f", ticksuffix="%"),
-            height=300, bargap=0.35
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.warning("לא ניתן לטעון נתונים עבור מדד זה כרגע")
-
-# ──────────────────────────────────────────────
-# TAB 4 — COMPARISON
-# ──────────────────────────────────────────────
 with tab4:
-    st.markdown("### השוואת מדדים — ביצועים מנורמלים")
-    name_to_ticker = {name: ticker for ticker, name, _ in ALL_TICKERS}
-    defaults = ["S&P 500", "נאסד\"ק 100", "תל אביב 35", "דאקס"]
-    valid_defaults = [n for n in defaults if n in name_to_ticker]
-
-    c1, c2 = st.columns([3, 1])
-    with c1:
-        sel_names = st.multiselect("בחר מדדים", list(name_to_ticker.keys()), default=valid_defaults)
+    n2t={name:ticker for ticker,name,_ in ALL}
+    defs=["S&P 500","Nasdaq 100","ת\"א 35","DAX","FTSE 100"]
+    defs_valid=[d for d in defs if d in n2t]
+    c1,c2=st.columns([3,1])
+    with c1: sel_names=st.multiselect("SELECT INDICES",list(n2t.keys()),default=defs_valid,label_visibility="visible")
     with c2:
-        comp_opts = {"3 חודשים": "3mo", "6 חודשים": "6mo", "שנה": "1y", "3 שנים": "3y", "5 שנים": "5y"}
-        comp_period = comp_opts[st.selectbox("תקופה ", list(comp_opts.keys()), index=2)]
-
+        cpmap={"3M":"3mo","6M":"6mo","1Y":"1y","3Y":"3y","5Y":"5y"}
+        cper=cpmap[st.selectbox("PERIOD",list(cpmap.keys()),index=2,key="cper",label_visibility="visible")]
+    st.markdown('<div class="chart-box">', unsafe_allow_html=True)
     if sel_names:
-        fig3 = go.Figure()
-        summary = []
-        for i, name in enumerate(sel_names):
-            ticker = name_to_ticker[name]
-            h = get_history(ticker, comp_period)
+        fig3=go.Figure()
+        for i,name in enumerate(sel_names):
+            t=n2t[name]; h=get_hist(t,cper)
             if h.empty: continue
-            norm = (h - h.iloc[0]) / h.iloc[0] * 100
-            fig3.add_trace(go.Scatter(
-                x=h.index, y=norm,
-                mode="lines", name=name,
-                line=dict(color=COLORS[i % len(COLORS)], width=2),
-                hovertemplate=f"{name}: %{{y:+.2f}}%<extra></extra>"
-            ))
-            ar = annual.get(ticker) or {}
-            q  = quotes.get(ticker) or {}
-            summary.append({
-                "מדד": name,
-                "תשואה בתקופה": round((h.iloc[-1]-h.iloc[0])/h.iloc[0]*100, 2),
-                "יומי": round(ar.get("יומי") or q.get("day_chg") or 0, 2),
-                "MTD":  round(ar.get("MTD") or 0, 2),
-                "YTD":  round(ar.get("YTD") or 0, 2),
-            })
+            norm=(h-h.iloc[0])/h.iloc[0]*100
+            fig3.add_trace(go.Scatter(x=h.index,y=norm,mode="lines",name=name,line=dict(color=COLORS[i%len(COLORS)],width=1.5),hovertemplate=f"<b>{name}</b>: %{{y:+.2f}}%<extra></extra>"))
+        fig3.update_layout(**CHART,yaxis=dict(**CHART["yaxis"],tickformat="+.1f",ticksuffix="%"),height=400,title=dict(text="Normalized Performance Comparison",font=dict(color="rgba(196,164,100,0.5)",size=11,family="Inter"),x=0,xanchor="left"),legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="right",x=1))
+        st.plotly_chart(fig3,use_container_width=True,config={"displayModeBar":False})
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        fig3.update_layout(
-            **PLOTLY_BASE,
-            title=dict(text="השוואת ביצועים — מנורמל מתחילת תקופה", font=dict(color="#f1f5f9", size=13)),
-            yaxis=dict(**PLOTLY_BASE["yaxis"], tickformat="+.1f", ticksuffix="%"),
-            height=420,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        st.plotly_chart(fig3, use_container_width=True)
-
-        if summary:
-            st.markdown("#### סיכום")
-            df_s = pd.DataFrame(summary)
-            num_cols = ["תשואה בתקופה","יומי","MTD","YTD"]
-            styled_s = (
-                df_s.style
-                .applymap(style_pct, subset=num_cols)
-                .format({c: fmt_pct for c in num_cols})
-                .set_properties(**{"text-align":"center","font-family":"IBM Plex Mono, monospace","font-size":"12px"})
-                .set_properties(subset=["מדד"], **{"text-align":"right","font-family":"Inter, sans-serif"})
-            )
-            st.dataframe(styled_s, use_container_width=True)
-
-# ══════════════════════════════════════════════
-# FOOTER
-# ══════════════════════════════════════════════
-st.markdown("""
-<div class='disclaimer'>
-* הנתונים מוצגים לצורכי מידע בלבד ואינם מהווים המלצת השקעה.
-נתוני המדדים מתעדכנים בעיכוב של עד 15 דקות. מקור: Yahoo Finance.
-תשואות עבר אינן ערובה לתשואות עתידיות.
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<div class='disc'>Data provided by Yahoo Finance · 15-minute delay · For informational purposes only — not investment advice · Past performance is not indicative of future results</div>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
